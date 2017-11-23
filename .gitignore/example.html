@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>D3 Example</title>
+    <script src="d3.min.js"></script>
+    <style>
+    
+      .axis text {
+        font: 16pt sans-serif;
+        font-family: 'Poiret One', cursive;
+      }
+
+      .axis path,
+      .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+      }
+
+
+      #population {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      #population td, #customers th {
+          border: 1px solid #ddd;
+          padding: 8px;
+      }
+
+      #population tr:nth-child(even){background-color: #f2f2f2;}
+
+      #population tr:hover {background-color: #ddd;}
+
+      #population th {
+          padding-top: 12px;
+          padding-bottom: 12px;
+          text-align: left;
+          background-color: #4CAF50;
+          color: white;
+      }
+
+      #chart {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+    </style>
+  </head>
+  <body>
+    <table id="population">
+      <thead>
+        <tr> <th>City</th> <th>Population</th> </tr>
+      </thead>
+      <tbody>
+        <tr> <td>Shanghai</td> <td>22315474</td> </tr>
+        <tr> <td>Buenos</td> <td>13076300</td> </tr>
+        </tr>  <td>Mumbai</td> <td>13691836</td> </tr>
+        </tr>  <td>Delhi</td> <td>10076300</td> </tr>
+        </tr>  <td>Hyderabad</td> <td>9691836</td> </tr>
+      </tbody>
+    </table>
+     <table id="chart" style="margin-top: 20px;">
+      <thead>
+        <tr> <td>Piechart: <input type="checkbox" id="myCheck" onclick="checkbox()">
+    Barchart: <input type="checkbox" id="barchart" onclick="barchartappear()"></td></tr>
+      
+    </table>
+    
+
+
+
+
+    <script>
+
+    // barchart function
+      var barchart = function(){
+        var outerWidth = 600;
+        var outerHeight = 250;
+        var margin = { left: 90, top: 30, right: 30, bottom: 30 };
+        var barPadding = 0.2;
+
+        var xColumn = "name";
+        var yColumn = "population";
+
+        var innerWidth  = outerWidth  - margin.left - margin.right;
+        var innerHeight = outerHeight - margin.top  - margin.bottom;
+
+        var svg = d3.select("body").append("svg")
+          .attr("width",  outerWidth)
+          .attr("height", outerHeight);
+        var g = svg.append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var xAxisG = g.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + innerHeight + ")");
+        var yAxisG = g.append("g")
+          .attr("class", "y axis");
+
+        var xScale = d3.scale.ordinal().rangeBands([0, innerWidth], barPadding);
+        var yScale = d3.scale.linear().range([innerHeight, 0]);
+
+        var xAxis = d3.svg.axis().scale(xScale).orient("bottom").outerTickSize(0);
+        var yAxis = d3.svg.axis().scale(yScale).orient("left")
+                        .ticks(5)                   // Use approximately 5 ticks marks.
+                        .tickFormat(d3.format("s")) // Use intelligent abbreviations, e.g. 5M for 5 Million
+                        .outerTickSize(0); 
+
+        function render(data){
+
+          xScale.domain(       data.map( function (d){ return d[xColumn]; }));
+          yScale.domain([0, d3.max(data, function (d){ return d[yColumn]; })]);
+
+          xAxisG.call(xAxis);
+          yAxisG.call(yAxis);
+
+          var bars = g.selectAll("rect").data(data);
+          bars.enter().append("rect")
+            .attr("width", xScale.rangeBand())
+            .attr("fill", "gray");
+          bars
+            .attr("x",      function (d){ return               xScale(d[xColumn]); })
+            .attr("y",      function (d){ return               yScale(d[yColumn]); })
+            .attr("height", function (d){ return innerHeight - yScale(d[yColumn]); });
+          bars.exit().remove();
+        }
+
+        function type(d){
+          d.population = +d.population;
+          return d;
+        }
+
+        var geonames_cities = [
+          {name: "Shanghai", population: 22315474},
+          {name: "Buenos",  population: 13076300},
+          {name: "Mumbai",  population: 13691836},
+          {name: "Delhi",  population: 10076300},
+          {name: "Hyderabad",  population: 9691836}
+        ];
+         render(geonames_cities);
+     }
+   
+
+   // Piechart function
+    var piechart = function(){
+      var w = 500,                        //width
+      h = 300,                            //height
+      r = 150,                            //radius
+      color = d3.scale.category20c();     //builtin range of colors
+      geonames_cities = [{"label":"Shanghai", "value":22315474}, 
+              {"label":"Buenos", "value":13076300}, 
+              {"label":"Mumbai", "value":13691836},
+              {"label":"Delhi", "value":10076300}, 
+              {"label":"Hyderabad", "value":9691836}
+            ];
+      
+      var vis = d3.select("body")
+          .append("svg:svg")              
+          .data([geonames_cities])                   
+              .attr("width", w)          
+              .attr("height", h)
+          .append("svg:g")                
+              .attr("transform", "translate(" + r + "," + r + ")")   
+      var arc = d3.svg.arc()             
+          .outerRadius(r);
+      var pie = d3.layout.pie()           
+          .value(function(d) { return d.value; });    
+      var arcs = vis.selectAll("g.slice")     
+          .data(pie)                          
+          .enter()                            
+              .append("svg:g")                
+                  .attr("class", "slice");    
+          arcs.append("svg:path")
+                  .attr("fill", function(d, i) { return color(i); } ) 
+                  .attr("d", arc);                                    
+          arcs.append("svg:text")                                     
+                  .attr("transform", function(d) {                  
+                  d.innerRadius = 0;
+                  d.outerRadius = r;
+                  return "translate(" + arc.centroid(d) + ")";
+              })
+              .attr("text-anchor", "middle")                          
+              .text(function(d, i) { return geonames_cities[i].label; });       
+        }
+   
+      var checkpoint=1;
+      var checkbox = function(check){
+        if((document.getElementById("myCheck").checked == true)  && (checkpoint === 1)){
+            piechart();
+            checkpoint=checkpoint+1;
+        }
+      }
+
+      var barChartPoint=1;
+      var barchartappear = function(check){
+        if((document.getElementById("barchart").checked == true)  && (barChartPoint === 1)){
+            barchart();
+            barChartPoint=barChartPoint+1;
+        }
+      }
+    </script>
+
+    
+  </body>
+</html>
